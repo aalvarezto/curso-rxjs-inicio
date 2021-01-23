@@ -1,58 +1,30 @@
 "use strict"
 
-import { from } from "rxjs"
-import { map, reduce, scan } from "rxjs/operators"
+import { Observable, Observer } from "rxjs"
 
-const numeros = [1, 2, 3, 4, 5]
-
-// const totalAcumulador = (acc, cur) => {
-// 	return acc + cur
-// }
-
-const totalAcumulador = (acc, cur) => acc + cur
-
-// Reduce
-from(numeros)
-	.pipe(
-		//
-		reduce(totalAcumulador, 0)
-	)
-	.subscribe(console.log)
-
-// Scan
-from(numeros)
-	.pipe(
-		//
-		scan(totalAcumulador, 0)
-	)
-	.subscribe(console.log)
-
-// Redux
-interface Usuario {
-	id?: string
-	autenticado?: boolean
-	token?: string
-	edad?: number
+const observer: Observer<any> = {
+	next: value => console.log("siguiente [next]:", value),
+	error: error => console.warn("error [obs]:", error),
+	complete: () => console.info("completado [obs]"),
 }
 
-const user: Usuario[] = [
-	{ id: "fher", autenticado: false, token: null },
-	{ id: "fher", autenticado: true, token: "ABC" },
-	{ id: "fher", autenticado: true, token: "ABC123" },
-]
+const obs$ = new Observable<string>(subs => {
+	subs.next("Hola")
+	subs.next("Mundo")
 
-const state$ = from(user).pipe(
-	scan<Usuario>(
-		(acc, cur) => {
-			return { ...acc, ...cur }
-		},
-		{ edad: 33 }
-	)
-)
+	subs.next("Hola")
+	subs.next("Mundo")
 
-const id$ = state$.pipe(
-	//
-	map(state => state.id)
-)
+	// const a = undefined
+	// a = a.map(v => v)
 
-id$.subscribe(console.log)
+	subs.complete()
+})
+
+obs$.subscribe(observer)
+
+// obs$.subscribe(
+// 	valor => console.log("next: ", valor),
+// 	error => console.warn("error: ", error),
+// 	() => console.log("Completado")
+// )
