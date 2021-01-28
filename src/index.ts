@@ -1,30 +1,47 @@
 "use strict"
 
-import { Observable, Observer } from "rxjs"
+import { fromEvent, Observable } from "rxjs"
+import { debounceTime, map, mergeAll, pluck } from "rxjs/operators"
 
-const observer: Observer<any> = {
-	next: value => console.log("siguiente [next]:", value),
-	error: error => console.warn("error [obs]:", error),
-	complete: () => console.info("completado [obs]"),
+import { ajax } from "rxjs/ajax"
+import { GithubUser } from "~interfaces/github-user.interface"
+import { GithubUsersResp } from "~interfaces/github-users.interface"
+import { elementAppender } from "./utils"
+
+const body = document.querySelector("body")
+const textInput = elementAppender("input", body)
+const orderList = elementAppender("ol", body)
+
+// Helpers
+const mostrarUsuarios = (usuarios: GithubUser[]) => {
+	console.log(usuarios)
+	orderList.innerHTML = ""
+
+	for (const usuario of usuarios) {
+		const li = elementAppender("li", orderList)
+		const img = elementAppender("img", li)
+		img.src = usuario.avatar_url
+
+		const anchor = elementAppender("a", li)
+		anchor.href = usuario.html_url
+		anchor.text = "Ver página"
+		anchor.target = "_blank"
+	}
 }
 
-const obs$ = new Observable<string>(subs => {
-	subs.next("Hola")
-	subs.next("Mundo")
+// Streams
+const input$ = fromEvent<KeyboardEvent>(textInput, "keyup")
 
-	subs.next("Hola")
-	subs.next("Mundo")
-
-	// const a = undefined
-	// a = a.map(v => v)
-
-	subs.complete()
-})
-
-obs$.subscribe(observer)
-
-// obs$.subscribe(
-// 	valor => console.log("next: ", valor),
-// 	error => console.warn("error: ", error),
-// 	() => console.log("Completado")
-// )
+input$
+	.pipe(
+		debounceTime<KeyboardEvent>(500),
+		pluck<KeyboardEvent, string>("target", "value"),
+		map<string, Observable<GithubUsersResp>>(texto =>
+			ajax.getJSON(
+				`https://api.github.com/search/users?q=${texto}` //
+			)
+		),
+		mergeAll<GithubUsersResp>(),
+		pluck<any, GithubUser[]>("items")
+	)
+	.subscribe(mostrarUsuarios)
