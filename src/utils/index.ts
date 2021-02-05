@@ -1,6 +1,11 @@
 "use strict"
 
-const elementAppender = (tagName, parentNode) =>
-	parentNode.appendChild(document.createElement(tagName))
+import createElement from "./createElement"
+import elementAppender from "./elementAppender"
 
-export { elementAppender }
+const clean = (element: HTMLElement) => {
+	element.innerHTML = ""
+	return element
+}
+
+export { elementAppender, createElement, clean }
